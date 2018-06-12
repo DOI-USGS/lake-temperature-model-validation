@@ -5,3 +5,6 @@
 # R project files
 .Rproj.user
 *.Rproj
+
+# remake files
+.remake/
