@@ -33,7 +33,7 @@ inventory_wqp <- function(wqp_needs, wqp_variables) {
   return(samples)
 }
 
-wqp_partition <- function(wqp_inventory, wqp_nrecords_chunk) {
+partition_wqp_inventory <- function(wqp_inventory, wqp_nrecords_chunk) {
   partitions <- bind_rows(lapply(unique(wqp_inventory$constituent), function(temp_constituent) {
     # an atomic group is a combination of parameters that can't be reasonably
     # split into multiple WQP pulls - in this case we're defining atomic
@@ -76,14 +76,14 @@ wqp_partition <- function(wqp_inventory, wqp_nrecords_chunk) {
     
     single_site_partitions <- single_site_partitions %>%
       mutate(
-        Constituent=constituent,
+        constituent=temp_constituent,
         PullTask=sprintf('%s_%s_%03d', 'WQP', constituent, seq(last_assignment + 1, last_assignment + nrow(single_site_partitions))))
     
     # create a filename column
    
     multi_site_partitions <- multi_site_partitions %>%
       mutate(
-        Constituent=constituent,
+        constituent=temp_constituent,
         PullTask=sprintf('%s_%s_%03d', 'WQP', constituent, assignments))
     
     partitions <- bind_rows(multi_site_partitions, single_site_partitions)
