@@ -1,3 +1,18 @@
+#' Get an inventory of the number of records per site/variable combination in NWIS
+#'
+#' Depending on the size of the request, calls to NWIS may need to be partitioned based 
+#' on record size. This gets the inventory of data available on NWIS that we need to fullfil 
+#' our "needs" - which is a series of site/variable combinations. 
+#' 
+#' @param wqp_needs A dataframe with columns site and variable which describes what we going to 
+#' pull from NWIS, which was calculated as the difference between our data "wants" and our data 
+#' "haves".
+#' @param wqp_variables List of lists that contain parameters of interest (e.g., temperature) and 
+#' all corresponding synonyms available in NWIS (e.g., "Temperature" and "Temperature, water").
+#' @return A dataframe returned by the function dataRetrieval::whatWQPdata, with one row per
+#'  site/variable combination and the 'resultCount' being the variable from which we will make 
+#'  decisions about partitioning data pull requests.
+
 inventory_wqp <- function(wqp_needs, wqp_variables) {
   
   # identify constituents we need
@@ -33,6 +48,14 @@ inventory_wqp <- function(wqp_needs, wqp_variables) {
   return(samples)
 }
 
+#' Partition calls to WQP based on number of records available in WQP and a number of records that
+#' is a reasonable call to WQP.
+#' 
+#' @param wqp_inventory A dataframe with WQP record counts (e.g., the output of dataRetrieval::whatWQPdata). 
+#' @param wqp_nrecords_chunk The maximum number of records that should be in a single call to WQP.
+#' @return A dataframe with the same number of rows in wqp_needs - e.g., for each site/variable combination.
+#' The dataframe stores the number of observations for that site/variable in WQP and the unique task 
+#' identifier that partitions site/variables into WQP pulls. 
 partition_wqp_inventory <- function(wqp_inventory, wqp_nrecords_chunk) {
   partitions <- bind_rows(lapply(unique(wqp_inventory$constituent), function(temp_constituent) {
     # an atomic group is a combination of parameters that can't be reasonably
@@ -40,7 +63,8 @@ partition_wqp_inventory <- function(wqp_inventory, wqp_nrecords_chunk) {
     # groups as distinct combinations of constituent (a group of
     # characteristicNames) and site ID. 
   
-    # right now, just grouping by unique site ID (MonitoringLocationIdentifier), however, if we have crosswalk available at this step,
+    # right now, just grouping by unique site ID (MonitoringLocationIdentifier), however, 
+    # if we have crosswalk available at this step,
     # could put in the unique NHDID for each lake to ensure each lake gets in same file
     atomic_groups <-  wqp_inventory %>%
       filter(constituent == temp_constituent) %>%
