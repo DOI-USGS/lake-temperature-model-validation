@@ -1,0 +1,10 @@
+# History files
+.Rhistory
+.Rapp.history
+
+# R project files
+.Rproj.user
+*.Rproj
+
+# remake files
+.remake/

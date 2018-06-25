@@ -1,0 +1,36 @@
+target_default: 0_config
+
+packages:
+  - yaml
+  - dplyr
+  - dataRetrieval
+  
+sources:
+  - 0_config/src/wants_needs_utils.R
+  - 0_config/src/wqp_utils.R
+  
+targets:
+  0_config:
+    depends:
+      - wqp_pull_lookup
+      
+  wqp_sites: # random sites chosen from 4 lakes in MN and 2 in WI - this will be output of upstream workflow - output of crosswalk?
+    command: c(I(c('MNPCA-11-0413-00-212', 'MNPCA-11-0412-00-203', 'MNPCA-11-0476-00-201', 'MNPCA-11-0383-00-202', 'WIDNR_WQX-643082', 'WIDNR_WQX-643380')))
+    
+  wqp_variables:
+    command: yaml.load_file("0_config/cfg/wqp_variables.yml")
+    
+  wqp_nrecords_chunk: # need to do a bit of investigating to know what this number should be
+    command: I(200)
+  
+  wqp_wants:
+    command: wqp_calc_wants(wqp_sites, wqp_variables)
+    
+  wqp_needs: # made up inventory of what sites and variables for which we have data
+    command: wqp_calc_needs(wqp_wants, wqp_haves = '0_config/input/wqp_haves.rds')
+  
+  wqp_inventory:
+    command: inventory_wqp(wqp_needs, wqp_variables)
+    
+  wqp_pull_lookup: 
+    command: partition_wqp_inventory(wqp_inventory, wqp_nrecords_chunk)
